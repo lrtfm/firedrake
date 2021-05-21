@@ -74,9 +74,6 @@ extensions = [Extension("firedrake.cython.{}".format(ext),
                         libraries=libs,
                         extra_link_args=link_args,
                         cython_compile_time_env=cython_compile_time_env) for (ext, libs) in cythonfiles]
-# if 'CC' not in env:
-#     env['CC'] = "mpicc"
-
 
 setup(name='firedrake',
       version=versioneer.get_version(),
@@ -87,11 +84,7 @@ setup(name='firedrake',
       author="Imperial College London and others",
       author_email="firedrake@imperial.ac.uk",
       url="http://firedrakeproject.org",
-      packages=["firedrake", "firedrake.adjoint", "firedrake.mg", "firedrake.slope_limiter",
-                "firedrake.matrix_free", "firedrake.preconditioners",
-                "firedrake.cython",
-                "firedrake.slate", "firedrake.slate.slac", "firedrake.slate.static_condensation",
-                "firedrake_configuration", "firedrake_citations"],
+      packages=find_packages(),
       package_data={"firedrake": ["evaluate.h",
                                   "locate.c",
                                   "icons/*.png"]},
