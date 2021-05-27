@@ -678,8 +678,8 @@ def get_simplex_orientation(entity_list, cone_list):
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def entity_orientation(PETSc.DM dm,
-                       np.ndarray[PetscInt, ndim=2, mode="c"] cell_closure):
+def entity_orientations(PETSc.DM dm,
+                        np.ndarray[PetscInt, ndim=2, mode="c"] cell_closure):
     """Compute cell orientation.
 
     :arg dm: The DM object encapsulating the mesh topology
@@ -695,31 +695,25 @@ def entity_orientation(PETSc.DM dm,
         PetscInt *cone = NULL
         PetscInt *cell_cone = NULL
         PetscInt *facet_cone = NULL
-        np.ndarray[PetscInt, ndim=2, mode="c"] entity_orientation
+        np.ndarray[PetscInt, ndim=2, mode="c"] entity_orientations
 
     dim = get_topological_dimension(dm)
-    # FInAT reference ordering
-    # DoFs are laid in the direction of
-    # increasing local point index
+    if dim == 0:
+        raise ValueError("Topological dimension can not be 0")
     get_height_stratum(dm.dm, 0, &cStart, &cEnd)
     numFacets = dm.getConeSize(cStart)
-    if dim == 0:
-        # No orientation
-        return None
-    elif dim == 1:
-        return None  # NotImplemented
+    if numFacets == dim + 1:
+        # FInAT reference ordering: triangle
+        #
+        #   1
+        #   | \
+        #   5   3
+        #   | 6   \
+        #   0--4---2
+        #
+        cell_type = "simplex"
     elif dim == 2:
-        if numFacets == 3:
-            # FInAT reference ordering: triangle
-            #
-            #   1
-            #   | \
-            #   5   3
-            #   | 6   \
-            #   0--4---2
-            #
-            cell_type = "simplex"
-        elif numFacets == 4:
+        if numFacets == 4:
             # FInAT reference ordering: quad
             #
             #   1---7---3
@@ -730,18 +724,12 @@ def entity_orientation(PETSc.DM dm,
             #
             cell_type = "quad"
         else:
-            return None  # NotImplemented
-    elif dim == 3:
-        if numFacets == 4:
-            cell_type = "simplex"
-        else:
-            return None
+            raise NotImplementedError(f"Unknown topology: topological dimension: {dim}, numFacets: {numFacets}")
     else:
-        return None  # NotImplemented
-
+        raise NotImplementedError(f"Unknown topology: topological dimension: {dim}, numFacets: {numFacets}")
     numCells = cell_closure.shape[0]
     entity_per_cell = cell_closure.shape[1]
-    entity_orientation = np.zeros((numCells, entity_per_cell), dtype=IntType)
+    entity_orientations = np.zeros((numCells, entity_per_cell), dtype=IntType)
     if cell_type == "simplex":
 
         def ncr(n ,r):
@@ -771,7 +759,7 @@ def entity_orientation(PETSc.DM dm,
                         else:
                             entity_list = cell_closure[cell, tuple(range(eEnd-1, eStart-1, -1))]
                         o = get_simplex_orientation(entity_list, cone_list)
-                    entity_orientation[cell, i] = o
+                    entity_orientations[cell, i] = o
     elif cell_type == "quad":
         # number of entities in each dimension
         ecounts = [4, 4, 1]
@@ -808,8 +796,8 @@ def entity_orientation(PETSc.DM dm,
                         cone_list.remove(cell_closure[cell, eStart + 1])
                         inds.append(cone_list.index(cell_closure[cell, eStart + 2]))
                         o = 2 * inds[0] + inds[1]
-                    entity_orientation[cell, i] = o
-    return entity_orientation
+                    entity_orientations[cell, i] = o
+    return entity_orientations
 
 
 @cython.boundscheck(False)
@@ -924,9 +912,9 @@ def get_cell_nodes(mesh,
     dm = mesh.topology_dm
     variable = mesh.variable_layers
     cell_closures = mesh.cell_closure
-    cell_orientations = mesh.entity_orientation
+    cell_orientations = mesh.entity_orientations
     #Eventually define for all mesh types.
-    #no op if mesh.entity_orientation is None
+    #no op if mesh.entity_orientations is None
     cell_orientations_defined = cell_orientations is not None
     if variable:
         layer_extents = mesh.layer_extents

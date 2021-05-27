@@ -447,10 +447,10 @@ class AbstractMeshTopology(object, metaclass=abc.ABCMeta):
 
     @property
     @abc.abstractmethod
-    def entity_orientation(self):
-        """2D array of cell orientations
+    def entity_orientations(self):
+        """2D array of entity orientations
 
-        Each row contains orientation of the associated cell.
+        Each row contains orientations of the cell entities.
         """
         pass
 
@@ -850,8 +850,8 @@ class MeshTopology(AbstractMeshTopology):
             raise NotImplementedError("Cell type '%s' not supported." % cell)
 
     @utils.cached_property
-    def entity_orientation(self):
-        return dmcommon.entity_orientation(self.topology_dm, self.cell_closure)
+    def entity_orientations(self):
+        return dmcommon.entity_orientations(self.topology_dm, self.cell_closure)
 
     def _facets(self, kind):
         if kind not in ["interior", "exterior"]:
@@ -1070,9 +1070,9 @@ class ExtrudedMeshTopology(MeshTopology):
         return self._base_mesh.cell_closure
 
     @utils.cached_property
-    def entity_orientation(self):
+    def entity_orientations(self):
         return None
-        #return self._base_mesh.entity_orientation
+        #return self._base_mesh.entity_orientations
 
     def _facets(self, kind):
         if kind not in ["interior", "exterior"]:
@@ -1328,7 +1328,7 @@ class VertexOnlyMeshTopology(AbstractMeshTopology):
                                          cell_numbering, entity_per_cell)
 
     @utils.cached_property
-    def entity_orientation(self):
+    def entity_orientations(self):
         return None
 
     def _facets(self, kind):
