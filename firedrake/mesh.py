@@ -1093,28 +1093,11 @@ class ExtrudedMeshTopology(MeshTopology):
         :arg permutations:
         :arg offsets: layer offsets for each entity dof.
         """
+        if permutations == None:
+            #FInAT permutation not implemented
+            entity_dofs = eutils.flat_entity_dofs(entity_dofs)
+            return super().make_cell_node_list(global_numbering, entity_dofs, None, offsets)
         assert sorted(entity_dofs.keys()) == sorted(permutations.keys()), "Mismatching keys"
-        """
-        exit(0)
-        for b, v in entity_dofs:
-            if v == 0:
-                continue
-            permutations_ext[b] = {}
-            for o, perm in permutations[b].items():
-                if len(perm) == 0:
-                    permutations_ext[b][o] = ()
-                else:
-                    k = 0
-                    n, = set([len(entity_dofs[(b, 0)][2*k]),
-                              len(entity_dofs[(b, 0)][2*k+1])])
-                    mn = len(entity_dofs[(b, 1)][k])
-                    assert mn % n == 0, f"Mismatching base ({n}) and vertical ({mn}) sizes"
-                    m = mn // n
-                    # Permute whole columns
-                    permutations_ext[b][o] = perm + \
-                                             tuple(n + m * perm[i] + j for i in range(n) for j in range(m)) + \
-                                             tuple(n + mn + p for p in perm)
-        """
         assert all(v == 0 or v == 1 for b, v in permutations), f"Vertical dim ({v}) out of range"
         permutations_ext = {}
         for b in set(b for b, v in permutations):

@@ -428,7 +428,8 @@ class FunctionSpaceData(object):
         node_set = get_node_set(mesh, key)
 
         edofs_key = entity_dofs_key(entity_dofs)
-        permutations_key = entity_dofs_key(permutations)  # Can use the same function
+        #permutations is None if not yet implemented
+        permutations_key = entity_dofs_key(permutations) if permutations else None
 
         # Empty map caches. This is a sui generis cache
         # implementation because of the need to support boundary

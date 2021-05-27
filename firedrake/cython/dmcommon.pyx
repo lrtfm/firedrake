@@ -974,7 +974,7 @@ def get_cell_nodes(mesh,
                 if variable:
                     off += offset[flat_index[k]]*(layer_extents[c, 0] - layer_extents[entity, 0])
                 for j in range(ceil_ndofs[i]):
-                    cell_nodes[cell, flat_index[k]] = off + permutations[dim][orient][j]
+                    cell_nodes[cell, flat_index[k]] = (off + permutations[dim][orient][j] if permutations else off + j)
                     k += 1
 
     CHKERR(PetscFree(ceil_ndofs))
